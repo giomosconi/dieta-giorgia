@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Piano alimentare · Giorgia</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --beige: #e8eae6;
+  --cream: #ffffff;
+  --blush: #fde8e4;
+  --green-dark: #2d6a4f;
+  --green-light: #52b788;
+  --text-dark: #111827;
+  --text-mid: #4b5563;
+  --text-light: #9ca3af;
+  --border: rgba(0,0,0,0.08);
+  --border-mid: rgba(0,0,0,0.15);
+}
+
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f0f2f0; min-height: 100vh; }
+
+.app { color: var(--text-dark); padding: 1rem; max-width: 600px; margin: 0 auto; }
+
+.app-header { margin-bottom: 1.5rem; padding-top: 0.5rem; }
+.app-title { font-size: 18px; font-weight: 500; color: var(--text-dark); letter-spacing: -0.01em; }
+.app-sub { font-size: 12px; color: var(--text-mid); margin-top: 3px; }
+
+.tabs { display: flex; gap: 6px; margin-bottom: 1.5rem; flex-wrap: wrap; }
+.tab {
+  padding: 8px 16px;
+  border-radius: 20px;
+  border: 1.5px solid var(--border-mid);
+  background: transparent;
+  color: var(--text-mid);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.15s;
+}
+.tab.active {
+  background: #6F8469;
+  border-color: #6F8469;
+  color: #F6EEE1;
+}
+
+.section { display: none; }
+.section.active { display: block; }
+
+.day-card { background: #ffffff; border: 1px solid var(--border); border-radius: 12px; margin-bottom: 10px; overflow: hidden; }
+.day-header { display: flex; align-items: center; justify-content: space-between; padding: 13px 16px; cursor: pointer; }
+.day-name { font-weight: 500; font-size: 15px; color: var(--text-dark); }
+.day-meta { display: flex; gap: 6px; align-items: center; }
+.day-badge { font-size: 11px; background: #f3f4f6; border-radius: 20px; padding: 3px 10px; color: var(--text-mid); }
+.day-badge.allenamento { background: #dcfce7; color: #166534; }
+.day-body { display: none; border-top: 1px solid var(--border); }
+.day-body.open { display: block; }
+.meal-row { display: grid; grid-template-columns: 90px 1fr; border-bottom: 1px solid var(--border); }
+.meal-row:last-child { border-bottom: none; }
+.meal-label { padding: 10px 12px; font-size: 10px; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: 0.07em; background: #f3f4f6; display: flex; align-items: flex-start; padding-top: 13px; }
+.meal-content { padding: 10px 12px; font-size: 13px; line-height: 1.55; color: var(--text-dark); background: #ffffff; }
+
+.day-selector { display: flex; gap: 6px; margin-bottom: 1rem; flex-wrap: wrap; }
+.day-btn { padding: 6px 12px; border-radius: 20px; border: 1.5px solid var(--border-mid); background: transparent; cursor: pointer; font-size: 13px; color: var(--text-mid); font-weight: 500; }
+.day-btn.active { background: #6F8469; border-color: #6F8469; color: #F6EEE1; }
+
+.tracker-grid { background: #ffffff; border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+.t-row { display: grid; grid-template-columns: 90px 1fr 44px; border-bottom: 1px solid var(--border); }
+.t-row:last-child { border-bottom: none; }
+.t-label { padding: 10px 12px; font-size: 10px; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: 0.07em; background: #f3f4f6; display: flex; align-items: center; }
+.t-content { padding: 10px 12px; font-size: 13px; line-height: 1.5; color: var(--text-dark); }
+.t-check-cell { display: flex; align-items: center; justify-content: center; background: #ffffff; }
+.check-btn { width: 26px; height: 26px; border-radius: 50%; border: 1.5px solid var(--border-mid); background: transparent; cursor: pointer; position: relative; transition: all 0.15s; }
+.check-btn.checked { background: #6F8469; border-color: #6F8469; }
+.check-btn.checked::after { content: ''; position: absolute; top: 7px; left: 5px; width: 10px; height: 6px; border-left: 2px solid #F6EEE1; border-bottom: 2px solid #F6EEE1; transform: rotate(-45deg); }
+
+.progress-bar { height: 4px; background: var(--beige); border-radius: 2px; margin-top: 12px; overflow: hidden; }
+.progress-fill { height: 100%; border-radius: 2px; background: #86AC8D; transition: width 0.4s; }
+.progress-label { font-size: 12px; color: var(--text-mid); margin-top: 5px; }
+
+.allenamento-row { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; background: #ffffff; border: 1px solid var(--border); border-radius: 12px; margin-top: 10px; }
+.allenamento-label { font-size: 14px; font-weight: 500; color: var(--text-dark); }
+.allenamento-sub { font-size: 12px; color: var(--text-mid); margin-top: 2px; }
+.toggle-pill { width: 44px; height: 24px; border-radius: 12px; background: var(--beige); border: 1.5px solid var(--border-mid); cursor: pointer; position: relative; transition: background 0.2s; flex-shrink: 0; }
+.toggle-pill.on { background: #86AC8D; border-color: #6F8469; }
+.toggle-knob { position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%; background: #fff; transition: left 0.2s; }
+.toggle-pill.on .toggle-knob { left: 22px; }
+
+.integr-card { background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 10px; padding: 12px 16px; margin-top: 10px; }
+.integr-title { font-size: 11px; font-weight: 600; color: #065f46; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.06em; }
+.integr-row { display: flex; align-items: center; justify-content: space-between; padding: 7px 0; border-bottom: 1px solid rgba(0,0,0,0.06); font-size: 13px; color: var(--text-dark); }
+.integr-row:last-child { border-bottom: none; }
+.integr-badge { font-size: 11px; padding: 3px 9px; border-radius: 20px; background: #d1fae5; color: #065f46; font-weight: 500; }
+.integr-badge.pre { background: #2d6a4f; color: #ffffff; }
+.integr-badge.sera { background: #dbeafe; color: #1e40af; }
+
+.days-filter { background: #ffffff; border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; margin-bottom: 1.2rem; }
+.days-filter-title { font-size: 13px; font-weight: 500; color: var(--text-dark); margin-bottom: 4px; }
+.days-filter-sub { font-size: 12px; color: var(--text-mid); margin-bottom: 12px; }
+.days-pills { display: flex; gap: 6px; flex-wrap: wrap; }
+.day-pill {
+  padding: 8px 14px;
+  border-radius: 20px;
+  border: 1.5px solid var(--border-mid);
+  background: #f3f4f6;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-mid);
+  transition: all 0.15s;
+}
+.day-pill.active {
+  background: #6F8469;
+  border-color: #6F8469;
+  color: #F6EEE1;
+}
+.days-summary { margin-top: 10px; font-size: 12px; color: var(--text-mid); padding-top: 10px; border-top: 1px solid var(--border); }
+.days-summary strong { color: var(--text-dark); font-weight: 500; }
+
+.spesa-section { margin-bottom: 1.2rem; }
+.spesa-cat-title { font-size: 11px; font-weight: 500; color: var(--text-mid); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 7px; padding-bottom: 5px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; }
+.spesa-count { color: var(--text-light); }
+.spesa-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
+.spesa-item { display: flex; align-items: center; gap: 8px; padding: 9px 10px; border-radius: 8px; border: 1px solid var(--border); background: #ffffff; cursor: pointer; transition: opacity 0.15s; }
+.spesa-item.done { opacity: 0.5; }
+.spesa-check { width: 16px; height: 16px; border-radius: 4px; border: 1.5px solid var(--border-mid); flex-shrink: 0; position: relative; }
+.spesa-check.done { background: #86AC8D; border-color: #6F8469; }
+.spesa-check.done::after { content: ''; position: absolute; top: 3px; left: 2px; width: 8px; height: 5px; border-left: 1.5px solid #F6EEE1; border-bottom: 1.5px solid #F6EEE1; transform: rotate(-45deg); }
+.spesa-name { font-size: 12px; color: var(--text-dark); flex: 1; line-height: 1.3; }
+.spesa-item.done .spesa-name { text-decoration: line-through; }
+.spesa-qty { font-size: 11px; color: var(--text-mid); white-space: nowrap; font-weight: 500; }
+
+.sost-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 1rem; }
+.sost-card { background: #ffffff; border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px; }
+.sost-from { font-size: 13px; font-weight: 600; color: var(--text-dark); margin-bottom: 7px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
+.sost-item { font-size: 12px; color: var(--text-mid); padding: 3px 0; line-height: 1.4; }
+
+.note-card { background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 10px; padding: 12px 16px; margin-top: 10px; font-size: 12px; color: #065f46; line-height: 1.7; }
+
+.action-btn { margin-top: 1rem; padding: 8px 16px; border-radius: 20px; border: 1.5px solid var(--border-mid); background: transparent; cursor: pointer; font-size: 13px; color: var(--text-mid); font-weight: 500; }
+</style>
+</head>
+<body>
+
+<div class="app">
+<div class="app-header">
+  <div class="app-title">Piano alimentare</div>
+  <div class="app-sub">Giorgia · 1600 kcal · medio bilanciato</div>
+</div>
+
+<div class="tabs">
+  <button class="tab active" onclick="showTab('settimana',this)">Settimana</button>
+  <button class="tab" onclick="showTab('tracker',this)">Tracker</button>
+  <button class="tab" onclick="showTab('spesa',this)">Spesa</button>
+  <button class="tab" onclick="showTab('sostituzioni',this)">Sostituzioni</button>
+</div>
+<div id="settimana" class="section active"></div>
+<div id="tracker" class="section"></div>
+<div id="spesa" class="section"></div>
+<div id="sostituzioni" class="section"></div>
+</div>
+
+<script>
+const GIORNI = ['Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato','Domenica'];
+const piani = {
+  'Lunedì': { colazione:'200ml latte p. scremato + 40g fette biscottate + 20g marmellata senza zuccheri aggiunti + 10g crema di mandorle o burro d\'arachidi', spuntino_m:'20g stick di grana', pranzo:'80g pane integrale + 150g petto di pollo o tacchino + verdure a volontà + 15g olio evo', spuntino_p:'150g frutta di stagione', cena:'80g pasta/riso/orzo/farro + 100g ricotta vaccina + verdure a volontà + 15g olio evo' },
+  'Martedì': { colazione:'200ml spremuta d\'arancia + 60g pane integrale + 1 uovo medio + 5g olio evo oppure 30g avocado', spuntino_m:'150g frutta di stagione', pranzo:'80g pane integrale + frittata con 2 uova + verdure a volontà + 15g olio evo', spuntino_p:'150g yogurt greco alla frutta 0% + 20g fiocchi d\'avena', cena:'80g pasta/riso + pesce bianco (150g orata o 200g merluzzo/nasello o 300g polpo) + verdure + 15g olio evo' },
+  'Mercoledì': { colazione:'200g yogurt magro bianco + 40g fiocchi d\'avena + 1 cucchiaino miele o 10g cioccolato fondente + 10g semi chia/lino', spuntino_m:'15g frutta secca', pranzo:'80g pane integrale + 150g polpette vegetali a base di legumi + verdure + 15g olio evo', spuntino_p:'150g frutta di stagione', cena:'80g pasta/riso + 150g carne di maiale o vitello magra + verdure + 15g olio evo' },
+  'Giovedì': { colazione:'200ml spremuta + 60g pane integrale + 50g affettato magro + 5g olio evo oppure 30g avocado', spuntino_m:'150g frutta di stagione', pranzo:'80g pane integrale + 100g mozzarella/primo sale oppure 170g fiocchi di latte + verdure + 15g olio evo', spuntino_p:'150g yogurt greco 0% + 2 gallette di riso', cena:'80g pasta/riso + 120g salmone fresco oppure salmone selvaggio affumicato + verdure + 15g olio evo' },
+  'Venerdì': { colazione:'Tè/tisana/caffè senza zucchero + 60g pane integrale tostato + 60g ricotta vaccina + 10g frutta secca + 1 cucchiaino miele', spuntino_m:'20g stick di grana', pranzo:'80g pane integrale + 150g petto di pollo o tacchino + verdure + 15g olio evo', spuntino_p:'150g frutta di stagione', cena:'80g pasta/riso + 50g legumi secchi o 150g legumi in barattolo + verdure + 15g olio evo' },
+  'Sabato': { colazione:'200ml spremuta + 60g pane integrale + 50g salmone selvaggio affumicato + 5g olio evo o 30g avocado', spuntino_m:'150g yogurt greco 0% + 1 barretta cereali senza zuccheri aggiunti (20g)', pranzo:'80g pasta/riso + 150g tonno al naturale o 100g sgombro al naturale + verdure + 15g olio evo', spuntino_p:'150g frutta di stagione', cena:'Pasto libero' },
+  'Domenica': { colazione:'200g yogurt magro bianco + 40g fiocchi d\'avena + 1 cucchiaino miele o cioccolato fondente + 10g semi chia/lino', spuntino_m:'150g frutta di stagione', pranzo:'80g pasta/riso + 150g carne rossa magra di manzo + verdure + 15g olio evo', spuntino_p:'15g frutta secca', cena:'80g pane integrale + 2 uova + verdure a volontà + 15g olio evo' }
+};
+const mealLabels = { colazione:'Colazione', spuntino_m:'Spuntino M', pranzo:'Pranzo', spuntino_p:'Spuntino P', cena:'Cena' };
+const spesaBase = {
+  'Proteine': [
+    { nome:'Petto di pollo/tacchino', perGiorno:['Lunedì','Venerdì'], base:150, unit:'g' },
+    { nome:'Pesce bianco (orata/merluzzo)', perGiorno:['Martedì'], base:200, unit:'g' },
+    { nome:'Salmone fresco o affumicato', perGiorno:['Giovedì','Sabato'], base:120, unit:'g' },
+    { nome:'Tonno al naturale', perGiorno:['Sabato'], base:150, unit:'g' },
+    { nome:'Uova', perGiorno:['Martedì','Domenica'], base:3, unit:'uova' },
+    { nome:'Carne rossa magra (manzo)', perGiorno:['Domenica'], base:150, unit:'g' },
+    { nome:'Carne di maiale/vitello magra', perGiorno:['Mercoledì'], base:150, unit:'g' },
+    { nome:'Affettato magro', perGiorno:['Giovedì'], base:50, unit:'g' },
+    { nome:'Legumi (barattolo o secchi)', perGiorno:['Mercoledì','Venerdì'], base:150, unit:'g' },
+  ],
+  'Latticini': [
+    { nome:'Yogurt greco 0% alla frutta', perGiorno:['Martedì','Giovedì','Sabato'], base:150, unit:'g' },
+    { nome:'Yogurt magro bianco', perGiorno:['Mercoledì','Domenica'], base:200, unit:'g' },
+    { nome:'Ricotta vaccina', perGiorno:['Lunedì','Venerdì'], base:80, unit:'g' },
+    { nome:'Mozzarella/primo sale', perGiorno:['Giovedì'], base:100, unit:'g' },
+    { nome:'Grana (stick)', perGiorno:['Lunedì','Venerdì'], base:20, unit:'g' },
+    { nome:'Latte p. scremato', perGiorno:['Lunedì'], base:200, unit:'ml' },
+  ],
+  'Carboidrati': [
+    { nome:'Pane integrale/segale', perGiorno:['Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato'], base:160, unit:'g' },
+    { nome:'Pasta/riso/orzo/farro', perGiorno:['Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato','Domenica'], base:80, unit:'g' },
+    { nome:'Fette biscottate', perGiorno:['Lunedì'], base:40, unit:'g' },
+    { nome:'Fiocchi d\'avena', perGiorno:['Martedì','Mercoledì','Domenica'], base:30, unit:'g' },
+    { nome:'Gallette di riso', perGiorno:['Giovedì'], base:2, unit:'gallette' },
+    { nome:'Barretta cereali s. zuccheri', perGiorno:['Sabato'], base:1, unit:'barretta' },
+  ],
+  'Frutta e verdura': [
+    { nome:'Frutta di stagione', perGiorno:['Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato','Domenica'], base:150, unit:'g' },
+    { nome:'Arance per spremuta', perGiorno:['Martedì','Giovedì','Sabato'], base:2, unit:'arance' },
+    { nome:'Verdure miste', perGiorno:['Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato','Domenica'], base:300, unit:'g' },
+  ],
+  'Grassi e altro': [
+    { nome:'Olio evo', perGiorno:GIORNI, base:30, unit:'g' },
+    { nome:'Avocado', perGiorno:['Martedì','Giovedì','Sabato'], base:30, unit:'g' },
+    { nome:'Frutta secca (noci/mandorle)', perGiorno:['Mercoledì','Venerdì','Domenica'], base:15, unit:'g' },
+    { nome:'Semi chia o lino', perGiorno:['Mercoledì','Domenica'], base:10, unit:'g' },
+    { nome:'Marmellata senza zuccheri', perGiorno:['Lunedì'], base:20, unit:'g' },
+    { nome:'Crema mandorle/burro arachidi', perGiorno:['Lunedì'], base:10, unit:'g' },
+  ]
+};
+const sostituzioni = [
+  { from:'10g olio evo', alts:['→ 30g avocado','→ 25g pesto di basilico'] },
+  { from:'5g olio evo', alts:['→ 10g semi vegetali','→ 10g frutta secca','→ 30g olive verdi (in ammollo)'] },
+  { from:'80g pane integrale', alts:['→ 250g patate (max 2×/settimana)'] },
+  { from:'Frutta secca', alts:['→ noci, mandorle, arachidi, nocciole, pinoli, pistacchi, anacardi'] },
+  { from:'Semi vegetali', alts:['→ lino, chia, sesamo, canapa, papavero, zucca, girasole, nigella'] },
+  { from:'Legumi', alts:['→ fagioli (borlotti, cannellini, neri...), lenticchie, ceci, fave, piselli, edamame'] },
+];
+
+// ── Persistenza localStorage ──────────────────────────────────────────────
+function loadState() {
+  try {
+    const s = localStorage.getItem('giorgia_dieta_v1');
+    return s ? JSON.parse(s) : {};
+  } catch(e) { return {}; }
+}
+function saveState() {
+  try {
+    localStorage.setItem('giorgia_dieta_v1', JSON.stringify({
+      checkedSpesa,
+      checkedMeals,
+      allenamento,
+      selectedDays: [...selectedDays],
+      trackerDay,
+      activeTab
+    }));
+  } catch(e) {}
+}
+
+const _saved = loadState();
+
+let checkedSpesa  = _saved.checkedSpesa  || {};
+let checkedMeals  = _saved.checkedMeals  || {};
+let allenamento   = _saved.allenamento   || {};
+let selectedDays  = new Set(_saved.selectedDays && _saved.selectedDays.length ? _saved.selectedDays : GIORNI);
+const todayIdx    = (() => { const d = new Date().getDay(); return d===0?7:d; })();
+let trackerDay    = _saved.trackerDay    || GIORNI[todayIdx-1] || 'Lunedì';
+let activeTab     = _saved.activeTab     || 'settimana';
+
+// ── Tab ───────────────────────────────────────────────────────────────────
+function showTab(id, btn) {
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  btn.classList.add('active');
+  activeTab = id;
+  saveState();
+}
+
+// ── Settimana ─────────────────────────────────────────────────────────────
+function renderSettimana() {
+  const el = document.getElementById('settimana'); el.innerHTML='';
+  GIORNI.forEach(g => {
+    const p=piani[g], all=allenamento[g];
+    const card=document.createElement('div'); card.className='day-card';
+    const rows=Object.entries(mealLabels).map(([k,label])=>`<div class="meal-row"><div class="meal-label">${label}</div><div class="meal-content">${p[k]}</div></div>`).join('');
+    card.innerHTML=`<div class="day-header" onclick="toggleDay('${g}')"><span class="day-name">${g}</span><div class="day-meta">${all?'<span class="day-badge allenamento">Allenamento</span>':''}<span class="day-badge">5 pasti</span></div></div><div class="day-body" id="day-${g}">${rows}</div>`;
+    el.appendChild(card);
+  });
+  const t=document.getElementById('day-'+trackerDay); if(t) t.classList.add('open');
+}
+function toggleDay(g){document.getElementById('day-'+g).classList.toggle('open');}
+
+// ── Tracker ───────────────────────────────────────────────────────────────
+function renderTracker() {
+  const el=document.getElementById('tracker'); el.innerHTML='';
+  const sel=document.createElement('div'); sel.className='day-selector';
+  GIORNI.forEach(g=>{const btn=document.createElement('button');btn.className='day-btn'+(g===trackerDay?' active':'');btn.textContent=g.slice(0,3);btn.onclick=()=>{trackerDay=g;saveState();renderTracker();};sel.appendChild(btn);});
+  el.appendChild(sel);
+  if(!checkedMeals[trackerDay]) checkedMeals[trackerDay]={};
+  const p=piani[trackerDay];
+  const grid=document.createElement('div'); grid.className='tracker-grid';
+  Object.entries(mealLabels).forEach(([k,label])=>{
+    const done=checkedMeals[trackerDay][k];
+    const row=document.createElement('div'); row.className='t-row';
+    row.innerHTML=`<div class="t-label">${label}</div><div class="t-content" style="${done?'text-decoration:line-through;color:#9a9186':''}">${p[k]}</div><div class="t-check-cell"><button class="check-btn ${done?'checked':''}" onclick="toggleMeal('${trackerDay}','${k}')"></button></div>`;
+    grid.appendChild(row);
+  });
+  el.appendChild(grid);
+  const done=Object.values(checkedMeals[trackerDay]).filter(Boolean).length;
+  const pct=Math.round((done/5)*100);
+  const prog=document.createElement('div');
+  prog.innerHTML=`<div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div><div class="progress-label">${done} di 5 pasti completati · ${pct}%</div>`;
+  el.appendChild(prog);
+  const isOn=!!allenamento[trackerDay];
+  const allRow=document.createElement('div'); allRow.className='allenamento-row';
+  allRow.innerHTML=`<div><div class="allenamento-label">Allenamento oggi</div><div class="allenamento-sub">${isOn?'Ricorda: BCAA 6g — 15min prima':'Attiva per il reminder integratori'}</div></div><div class="toggle-pill ${isOn?'on':''}" onclick="toggleAll('${trackerDay}')"><div class="toggle-knob"></div></div>`;
+  el.appendChild(allRow);
+  const integr=document.createElement('div'); integr.className='integr-card';
+  integr.innerHTML=`<div class="integr-title">Integratori</div><div class="integr-row"><span>Creatina monoidrato — 3g</span><span class="integr-badge">con i carbo</span></div>${isOn?'<div class="integr-row"><span>BCAA — 6g</span><span class="integr-badge pre">pre-workout</span></div>':''}<div class="integr-row"><span>Magnesio bisglicinato — 300mg</span><span class="integr-badge sera">sera</span></div>`;
+  el.appendChild(integr);
+}
+function toggleMeal(day,key){if(!checkedMeals[day])checkedMeals[day]={};checkedMeals[day][key]=!checkedMeals[day][key];saveState();renderTracker();}
+function toggleAll(day){allenamento[day]=!allenamento[day];saveState();renderTracker();renderSettimana();}
+
+// ── Spesa ─────────────────────────────────────────────────────────────────
+function calcSpesa(){
+  const result={};
+  Object.entries(spesaBase).forEach(([cat,items])=>{
+    result[cat]=items.map(item=>{
+      const days=item.perGiorno.filter(d=>selectedDays.has(d));
+      if(!days.length) return null;
+      const total=days.length*item.base;
+      let qty;
+      if(item.unit==='g') qty=total+'g';
+      else if(item.unit==='ml') qty=total+'ml';
+      else if(item.unit==='uova') qty=total+' uova';
+      else if(item.unit==='gallette') qty=total+' gallette';
+      else if(item.unit==='barretta') qty=total+(total===1?' barretta':' barrette');
+      else if(item.unit==='arance') qty=total+' arance';
+      else qty=total+' '+item.unit;
+      return {nome:item.nome,qty};
+    }).filter(Boolean);
+  });
+  return result;
+}
+
+function renderSpesa(){
+  const el=document.getElementById('spesa'); el.innerHTML='';
+  const fc=document.createElement('div'); fc.className='days-filter';
+  const selNames=GIORNI.filter(g=>selectedDays.has(g)).map(g=>g.slice(0,3)).join(', ');
+  const pills=GIORNI.map(g=>`<button class="day-pill ${selectedDays.has(g)?'active':''}" onclick="toggleDayFilter('${g}')">${g.slice(0,3)}</button>`).join('');
+  fc.innerHTML=`<div class="days-filter-title">Per quali giorni fare la spesa?</div><div class="days-filter-sub">Tocca per selezionare. Le quantità si sommano in automatico.</div><div class="days-pills">${pills}</div><div class="days-summary">Selezionati: <strong>${selectedDays.size} ${selectedDays.size===1?'giorno':'giorni'}</strong> — ${selNames}</div>`;
+  el.appendChild(fc);
+  const calcolata=calcSpesa();
+  Object.entries(calcolata).forEach(([cat,items])=>{
+    if(!items.length) return;
+    const sec=document.createElement('div'); sec.className='spesa-section';
+    const grid=items.map(item=>{
+      const key=cat+'|'+item.nome; const done=checkedSpesa[key];
+      return `<div class="spesa-item ${done?'done':''}" onclick="toggleSpesa('${key.replace(/'/g,"\\'").replace(/\(/g,'\\(').replace(/\)/g,'\\)')}')"><div class="spesa-check ${done?'done':''}"></div><span class="spesa-name">${item.nome}</span><span class="spesa-qty">${item.qty}</span></div>`;
+    }).join('');
+    sec.innerHTML=`<div class="spesa-cat-title"><span>${cat}</span><span class="spesa-count">${items.length} voci</span></div><div class="spesa-grid">${grid}</div>`;
+    el.appendChild(sec);
+  });
+  const btn=document.createElement('button'); btn.className='action-btn'; btn.textContent='Azzera spuntature'; btn.onclick=()=>{checkedSpesa={};saveState();renderSpesa();};
+  el.appendChild(btn);
+}
+function toggleDayFilter(g){if(selectedDays.has(g)){if(selectedDays.size>1)selectedDays.delete(g);}else{selectedDays.add(g);}saveState();renderSpesa();}
+function toggleSpesa(key){checkedSpesa[key]=!checkedSpesa[key];saveState();renderSpesa();}
+
+// ── Sostituzioni ──────────────────────────────────────────────────────────
+function renderSostituzioni(){
+  const el=document.getElementById('sostituzioni'); el.innerHTML='';
+  const intro=document.createElement('p'); intro.style.cssText='font-size:13px;color:#6b6358;margin-bottom:1rem;line-height:1.6;'; intro.textContent='Equivalenze per i grassi buoni: mantieni lo stesso apporto usando queste alternative.'; el.appendChild(intro);
+  const grid=document.createElement('div'); grid.className='sost-grid';
+  sostituzioni.forEach(s=>{const card=document.createElement('div');card.className='sost-card';card.innerHTML=`<div class="sost-from">${s.from}</div>${s.alts.map(a=>`<div class="sost-item">${a}</div>`).join('')}`;grid.appendChild(card);});
+  el.appendChild(grid);
+  const note=document.createElement('div'); note.className='note-card';
+  note.innerHTML=`<strong style="font-weight:500;color:#5a3e3b;">Frequenze settimanali</strong><br>Carne bianca 1–3× · Carne rossa 1× · Pesce 2–3× · Formaggi freschi 1–2× · Legumi 2–3× · Uova 2–4 · Pasto libero 1×<br><br><strong style="font-weight:500;color:#5a3e3b;">Condimenti pasta:</strong> verdure, pomodoro fresco, sugo di pomodoro, olio indicato, pesto max 1×/sett.`;
+  el.appendChild(note);
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────
+renderSettimana(); renderTracker(); renderSpesa(); renderSostituzioni();
+
+// Ripristina tab attivo
+if(activeTab && activeTab !== 'settimana') {
+  const tabs = document.querySelectorAll('.tab');
+  const tabMap = ['settimana','tracker','spesa','sostituzioni'];
+  const idx = tabMap.indexOf(activeTab);
+  if(idx >= 0) showTab(activeTab, tabs[idx]);
+}
+</script>
+</body>
+</html>
