@@ -62,6 +62,10 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .meal-label { padding: 10px 12px; font-size: 10px; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: 0.07em; background: #f3f4f6; display: flex; align-items: flex-start; padding-top: 13px; }
 .meal-content { padding: 10px 12px; font-size: 13px; line-height: 1.55; color: var(--text-dark); background: #ffffff; }
 
+.meal-alt { font-size: 12px; color: var(--text-mid); margin-top: 4px; }
+.settimana-hint { font-size: 12px; color: var(--text-mid); margin-bottom: 10px; line-height: 1.5; }
+.sost-title { font-size: 13px; font-weight: 500; color: var(--text-dark); margin: 0 0 8px; }
+
 .day-selector { display: flex; gap: 6px; margin-bottom: 1rem; flex-wrap: wrap; }
 .day-btn { padding: 6px 12px; border-radius: 20px; border: 1.5px solid var(--border-mid); background: transparent; cursor: pointer; font-size: 13px; color: var(--text-mid); font-weight: 500; }
 .day-btn.active { background: #6F8469; border-color: #6F8469; color: #F6EEE1; }
@@ -147,7 +151,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 <div class="app">
 <div class="app-header">
   <div class="app-title">Piano alimentare</div>
-  <div class="app-sub">Giorgia · 1600 kcal · medio bilanciato</div>
+  <div class="app-sub">Giorgia · massa muscolare · ON 1900 kcal · OFF 1700 kcal</div>
 </div>
 
 <div class="tabs">
@@ -164,66 +168,212 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 
 <script>
 const GIORNI = ['Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato','Domenica'];
+// Giorni di allenamento predefiniti (modificabili dal Tracker)
+const ALLENAMENTO_DEFAULT = { 'Martedì':true, 'Giovedì':true, 'Sabato':true };
+
+// Ogni giorno ha un menu ON (allenamento, 1900 kcal) e uno OFF (riposo, 1700 kcal).
+// "ing" serve solo a calcolare la spesa: contiene i pasti principali, non le alternative.
 const piani = {
-  'Lunedì': { colazione:'200ml latte p. scremato + 40g fette biscottate + 20g marmellata senza zuccheri aggiunti + 10g crema di mandorle o burro d\'arachidi', spuntino_m:'20g stick di grana', pranzo:'80g pane integrale + 150g petto di pollo o tacchino + verdure a volontà + 15g olio evo', spuntino_p:'150g frutta di stagione', cena:'80g pasta/riso/orzo/farro + 100g ricotta vaccina + verdure a volontà + 15g olio evo' },
-  'Martedì': { colazione:'200ml spremuta d\'arancia + 60g pane integrale + 1 uovo medio + 5g olio evo oppure 30g avocado', spuntino_m:'150g frutta di stagione', pranzo:'80g pane integrale + frittata con 2 uova + verdure a volontà + 15g olio evo', spuntino_p:'150g yogurt greco alla frutta 0% + 20g fiocchi d\'avena', cena:'80g pasta/riso + pesce bianco (150g orata o 200g merluzzo/nasello o 300g polpo) + verdure + 15g olio evo' },
-  'Mercoledì': { colazione:'200g yogurt magro bianco + 40g fiocchi d\'avena + 1 cucchiaino miele o 10g cioccolato fondente + 10g semi chia/lino', spuntino_m:'15g frutta secca', pranzo:'80g pane integrale + 150g polpette vegetali a base di legumi + verdure + 15g olio evo', spuntino_p:'150g frutta di stagione', cena:'80g pasta/riso + 150g carne di maiale o vitello magra + verdure + 15g olio evo' },
-  'Giovedì': { colazione:'200ml spremuta + 60g pane integrale + 50g affettato magro + 5g olio evo oppure 30g avocado', spuntino_m:'150g frutta di stagione', pranzo:'80g pane integrale + 100g mozzarella/primo sale oppure 170g fiocchi di latte + verdure + 15g olio evo', spuntino_p:'150g yogurt greco 0% + 2 gallette di riso', cena:'80g pasta/riso + 120g salmone fresco oppure salmone selvaggio affumicato + verdure + 15g olio evo' },
-  'Venerdì': { colazione:'Tè/tisana/caffè senza zucchero + 60g pane integrale tostato + 60g ricotta vaccina + 10g frutta secca + 1 cucchiaino miele', spuntino_m:'20g stick di grana', pranzo:'80g pane integrale + 150g petto di pollo o tacchino + verdure + 15g olio evo', spuntino_p:'150g frutta di stagione', cena:'80g pasta/riso + 50g legumi secchi o 150g legumi in barattolo + verdure + 15g olio evo' },
-  'Sabato': { colazione:'200ml spremuta + 60g pane integrale + 50g salmone selvaggio affumicato + 5g olio evo o 30g avocado', spuntino_m:'150g yogurt greco 0% + 1 barretta cereali senza zuccheri aggiunti (20g)', pranzo:'80g pasta/riso + 150g tonno al naturale o 100g sgombro al naturale + verdure + 15g olio evo', spuntino_p:'150g frutta di stagione', cena:'Pasto libero' },
-  'Domenica': { colazione:'200g yogurt magro bianco + 40g fiocchi d\'avena + 1 cucchiaino miele o cioccolato fondente + 10g semi chia/lino', spuntino_m:'150g frutta di stagione', pranzo:'80g pasta/riso + 150g carne rossa magra di manzo + verdure + 15g olio evo', spuntino_p:'15g frutta secca', cena:'80g pane integrale + 2 uova + verdure a volontà + 15g olio evo' }
+  'Lunedì': {
+    on: {
+      colazione:"Porridge con 50g fiocchi d'avena + 1 yogurt greco 0% + 1 mela + 1 cucchiaino burro d'arachidi",
+      spuntino_m:"15 mandorle",
+      pranzo:"100g pasta + 150g petto di pollo", pranzo_alt:"100g riso + 200g merluzzo",
+      spuntino_p:"3-4 gallette + 1 yogurt greco",
+      cena:"250g patate al forno + 200g orata", cena_alt:"70g couscous + 150g tacchino",
+      ing:{avena:50,yogurt:2,frutta:1,arachidi:1,mandorle:15,pasta:100,pollo:150,gallette:4,patate:250,pesce:200,verdure:400,olio:3}
+    },
+    off: {
+      colazione:"Porridge con 40g fiocchi d'avena + 1 yogurt greco 0% + 1 mela + 1 cucchiaino burro d'arachidi",
+      spuntino_m:"1 frutto + 15 mandorle",
+      pranzo:"50g riso + 150g petto di pollo", pranzo_alt:"200g patate + 200g merluzzo",
+      spuntino_p:"1 kefir + 20g parmigiano",
+      cena:"50g pane integrale + 200g orata", cena_alt:"50g pane integrale + frittata con 200g albume + 1 uovo",
+      ing:{avena:40,yogurt:1,frutta:2,arachidi:1,mandorle:15,riso:50,pollo:150,kefir:1,parmigiano:20,pane:50,pesce:200,verdure:400,olio:2}
+    }
+  },
+  'Martedì': {
+    on: {
+      colazione:"60g pane integrale + 1 ricottina light + 1 cucchiaino marmellata + 10g cioccolato fondente",
+      spuntino_m:"15 pistacchi",
+      pranzo:"120g pasta integrale + 200g merluzzo", pranzo_alt:"100g riso + 150g tacchino",
+      spuntino_p:"1 banana + 1 yogurt greco",
+      cena:"70g polenta + 150g petto di pollo", cena_alt:"250g patate + 200g branzino",
+      ing:{pane:60,ricottina:1,marmellata:1,fondente:10,pistacchi:15,pastaint:120,pesce:200,frutta:1,yogurt:1,polenta:70,pollo:150,verdure:400,olio:3}
+    },
+    off: {
+      colazione:"50g pane integrale + 1 ricottina light + 1 cucchiaino marmellata + 15g cioccolato fondente",
+      spuntino_m:"1 frutto + 15 pistacchi",
+      pranzo:"50g riso + 150g tacchino", pranzo_alt:"70g pasta integrale + 200g pesce magro",
+      spuntino_p:"1 yogurt greco + 15 mandorle",
+      cena:"50g pane integrale + 150g salmone", cena_alt:"50g pane integrale + frittata con 200g albume + 1 uovo",
+      ing:{pane:100,ricottina:1,marmellata:1,fondente:15,frutta:1,pistacchi:15,riso:50,tacchino:150,yogurt:1,mandorle:15,salmone:150,verdure:400,olio:2}
+    }
+  },
+  'Mercoledì': {
+    on: {
+      colazione:"4-5 fette biscottate integrali + 1 kefir + 1 cucchiaino miele + 10g frutta secca",
+      spuntino_m:"20g parmigiano",
+      pranzo:"150g ceci + 50g riso", pranzo_alt:"110g farro + frittata con 150g albume + 1 uovo",
+      spuntino_p:"1 banana + 20g proteine in polvere",
+      cena:"90g pasta integrale + 200g merluzzo", cena_alt:"250g patate + 150g tacchino",
+      ing:{fette:5,kefir:1,miele:1,fruttasecca:10,parmigiano:20,legumi:150,riso:50,frutta:1,proteine:20,pastaint:90,pesce:200,verdure:400,olio:3}
+    },
+    off: {
+      colazione:"3-4 fette biscottate integrali + 1 kefir + 1 cucchiaino miele + 10g frutta secca",
+      spuntino_m:"1 frutto + 20g parmigiano",
+      pranzo:"150-200g ceci + 20g riso", pranzo_alt:"70g pasta integrale + 150g tacchino",
+      spuntino_p:"1 yogurt greco + 2 noci",
+      cena:"50g pane integrale + 150g tacchino", cena_alt:"50g pane integrale + 150g salmone",
+      ing:{fette:4,kefir:1,miele:1,fruttasecca:10,frutta:1,parmigiano:20,legumi:200,riso:20,yogurt:1,noci:2,pane:50,tacchino:150,verdure:400,olio:2}
+    }
+  },
+  'Giovedì': {
+    on: {
+      colazione:"Porridge con 50g fiocchi d'avena + 150ml latte p. scremato + 1 misurino scarso di proteine + 1 frutto + 10g frutta secca",
+      spuntino_m:"20g parmigiano",
+      pranzo:"400g patate + 150g petto di pollo", pranzo_alt:"110g orzo perlato + 200g pesce magro",
+      spuntino_p:"3-4 gallette + 20g proteine in polvere",
+      cena:"70g riso + 200g nasello", cena_alt:"100g pane integrale + frittata con 150g albume + 1 uovo",
+      ing:{avena:50,latte:150,proteine:40,frutta:1,fruttasecca:10,parmigiano:20,patate:400,pollo:150,gallette:4,riso:70,pesce:200,verdure:400,olio:3}
+    },
+    off: {
+      colazione:"Overnight oats con 40g fiocchi d'avena + 150ml latte + proteine + 1 frutto + 1 cucchiaino burro d'arachidi",
+      spuntino_m:"1 frutto + 15 mandorle",
+      pranzo:"200g patate + 150g petto di pollo", pranzo_alt:"150-200g lenticchie + 20g pasta",
+      spuntino_p:"1 kefir + 2 noci",
+      cena:"50g pane integrale + 150g tonno al naturale", cena_alt:"50g pane integrale + 200g pesce magro",
+      ing:{avena:40,latte:150,proteine:15,frutta:2,arachidi:1,mandorle:15,patate:200,pollo:150,kefir:1,noci:2,pane:50,tonno:150,verdure:400,olio:2}
+    }
+  },
+  'Venerdì': {
+    on: {
+      colazione:"60g pane integrale + omelette con 150g albume + 1 uovo + 1 frutto",
+      spuntino_m:"10 olive",
+      pranzo:"100g couscous + 150g petto di pollo", pranzo_alt:"100g polenta + 200g pesce magro",
+      spuntino_p:"3-4 gallette + 1 yogurt greco",
+      cena:"100g pane integrale + frittata con 150g albume + 1 uovo", cena_alt:"80g orzo + 200g branzino",
+      ing:{pane:160,albume:300,uova:2,frutta:1,olive:10,couscous:100,pollo:150,gallette:4,yogurt:1,verdure:400,olio:3}
+    },
+    off: {
+      colazione:"50g pane integrale + omelette con 100-150g albume + 1 uovo + 1 frutto",
+      spuntino_m:"1 frutto + 3 noci",
+      pranzo:"50g couscous + 150g petto di pollo", pranzo_alt:"50g polenta + 200g pesce magro",
+      spuntino_p:"15g proteine in polvere + 15 mandorle",
+      cena:"50g pane integrale + 200g branzino", cena_alt:"50g pane integrale + frittata con 200g albume + 1 uovo",
+      ing:{pane:100,albume:150,uova:1,frutta:2,noci:3,couscous:50,pollo:150,proteine:15,mandorle:15,pesce:200,verdure:400,olio:2}
+    }
+  },
+  'Sabato': {
+    on: {
+      colazione:"Pancake con 50g farina d'avena + 150g albume + 5g burro + 1 cucchiaino marmellata",
+      spuntino_m:"15 nocciole",
+      pranzo:"Insalata con 110g farro + 150g petto di pollo", pranzo_alt:"Panino con 150g pane integrale + 80g fesa di tacchino",
+      spuntino_p:"1 frutto + 1 kefir",
+      cena:"Pasto libero",
+      ing:{avena:50,albume:150,burro:5,marmellata:1,nocciole:15,farro:110,pollo:150,frutta:1,kefir:1,verdure:200,olio:1}
+    },
+    off: {
+      colazione:"Pancake con 40g farina d'avena + 100-150g albume + 10g burro + 1 cucchiaino marmellata",
+      spuntino_m:"1 frutto + 15 pistacchi",
+      pranzo:"70g pasta integrale + 200g pesce magro", pranzo_alt:"80g pane integrale + 1 ricottina light",
+      spuntino_p:"1 yogurt greco + 2 noci",
+      cena:"Pasto libero",
+      ing:{avena:40,albume:150,burro:10,marmellata:1,frutta:1,pistacchi:15,pastaint:70,pesce:200,yogurt:1,noci:2,verdure:200,olio:1}
+    }
+  },
+  'Domenica': {
+    on: {
+      colazione:"4-5 fette biscottate integrali + 1 kefir + 1 cucchiaino marmellata + 10g cioccolato fondente",
+      spuntino_m:"15 mandorle",
+      pranzo:"100g pasta + 150g tacchino", pranzo_alt:"150g legumi + 70g pasta",
+      spuntino_p:"1 frutto + 1 yogurt greco",
+      cena:"80g farro + 150g petto di pollo", cena_alt:"90g pasta integrale + 200g pesce magro",
+      ing:{fette:5,kefir:1,marmellata:1,fondente:10,mandorle:15,pasta:100,tacchino:150,frutta:1,yogurt:1,farro:80,pollo:150,verdure:400,olio:3}
+    },
+    off: {
+      colazione:"3-4 fette biscottate integrali + 1 kefir + 1 cucchiaino marmellata + 15g cioccolato fondente",
+      spuntino_m:"1 frutto + 20g parmigiano",
+      pranzo:"70g pasta integrale + 150g tacchino", pranzo_alt:"200g patate + 200g pesce magro",
+      spuntino_p:"15g proteine in polvere + 2 noci",
+      cena:"50g pane integrale + 1 mozzarella", cena_alt:"50g pane integrale + 150g sgombro in scatola",
+      ing:{fette:4,kefir:1,marmellata:1,fondente:15,frutta:1,parmigiano:20,pastaint:70,tacchino:150,proteine:15,noci:2,pane:50,mozzarella:1,verdure:400,olio:2}
+    }
+  }
 };
 const mealLabels = { colazione:'Colazione', spuntino_m:'Spuntino M', pranzo:'Pranzo', spuntino_p:'Spuntino P', cena:'Cena' };
-const spesaBase = {
-  'Proteine': [
-    { nome:'Petto di pollo/tacchino', perGiorno:['Lunedì','Venerdì'], base:150, unit:'g' },
-    { nome:'Pesce bianco (orata/merluzzo)', perGiorno:['Martedì'], base:200, unit:'g' },
-    { nome:'Salmone fresco o affumicato', perGiorno:['Giovedì','Sabato'], base:120, unit:'g' },
-    { nome:'Tonno al naturale', perGiorno:['Sabato'], base:150, unit:'g' },
-    { nome:'Uova', perGiorno:['Martedì','Domenica'], base:3, unit:'uova' },
-    { nome:'Carne rossa magra (manzo)', perGiorno:['Domenica'], base:150, unit:'g' },
-    { nome:'Carne di maiale/vitello magra', perGiorno:['Mercoledì'], base:150, unit:'g' },
-    { nome:'Affettato magro', perGiorno:['Giovedì'], base:50, unit:'g' },
-    { nome:'Legumi (barattolo o secchi)', perGiorno:['Mercoledì','Venerdì'], base:150, unit:'g' },
+
+// Catalogo spesa: id → nome, categoria, unità
+const ingredienti = {
+  pollo:{nome:"Petto di pollo",cat:"Proteine",unit:"g"},
+  tacchino:{nome:"Tacchino",cat:"Proteine",unit:"g"},
+  pesce:{nome:"Pesce magro (merluzzo, orata, branzino, nasello)",cat:"Proteine",unit:"g"},
+  salmone:{nome:"Salmone fresco",cat:"Proteine",unit:"g"},
+  tonno:{nome:"Tonno al naturale",cat:"Proteine",unit:"g"},
+  uova:{nome:"Uova BIO",cat:"Proteine",unit:"uova"},
+  albume:{nome:"Albume",cat:"Proteine",unit:"g"},
+  legumi:{nome:"Ceci",cat:"Proteine",unit:"g"},
+  proteine:{nome:"Proteine in polvere",cat:"Proteine",unit:"g"},
+  yogurt:{nome:"Yogurt greco 0%",cat:"Latticini",unit:"vasetti"},
+  kefir:{nome:"Kefir",cat:"Latticini",unit:"vasetti"},
+  ricottina:{nome:"Ricottina light",cat:"Latticini",unit:"pz"},
+  mozzarella:{nome:"Mozzarella",cat:"Latticini",unit:"pz"},
+  parmigiano:{nome:"Parmigiano reggiano DOP",cat:"Latticini",unit:"g"},
+  latte:{nome:"Latte p. scremato",cat:"Latticini",unit:"ml"},
+  burro:{nome:"Burro",cat:"Latticini",unit:"g"},
+  pane:{nome:"Pane integrale",cat:"Carboidrati",unit:"g"},
+  pasta:{nome:"Pasta",cat:"Carboidrati",unit:"g"},
+  pastaint:{nome:"Pasta integrale",cat:"Carboidrati",unit:"g"},
+  riso:{nome:"Riso",cat:"Carboidrati",unit:"g"},
+  couscous:{nome:"Couscous",cat:"Carboidrati",unit:"g"},
+  farro:{nome:"Farro",cat:"Carboidrati",unit:"g"},
+  polenta:{nome:"Polenta",cat:"Carboidrati",unit:"g"},
+  patate:{nome:"Patate",cat:"Carboidrati",unit:"g"},
+  avena:{nome:"Fiocchi/farina d'avena",cat:"Carboidrati",unit:"g"},
+  fette:{nome:"Fette biscottate integrali",cat:"Carboidrati",unit:"fette"},
+  gallette:{nome:"Gallette di riso/farro",cat:"Carboidrati",unit:"gallette"},
+  frutta:{nome:"Frutta di stagione",cat:"Frutta e verdura",unit:"frutti"},
+  verdure:{nome:"Verdure miste",cat:"Frutta e verdura",unit:"g"},
+  olio:{nome:"Olio EVO",cat:"Grassi e altro",unit:"cucchiai"},
+  mandorle:{nome:"Mandorle",cat:"Grassi e altro",unit:"pz"},
+  pistacchi:{nome:"Pistacchi",cat:"Grassi e altro",unit:"pz"},
+  nocciole:{nome:"Nocciole",cat:"Grassi e altro",unit:"pz"},
+  noci:{nome:"Noci sgusciate",cat:"Grassi e altro",unit:"pz"},
+  fruttasecca:{nome:"Frutta secca",cat:"Grassi e altro",unit:"g"},
+  olive:{nome:"Olive",cat:"Grassi e altro",unit:"pz"},
+  arachidi:{nome:"Burro d'arachidi 100%",cat:"Grassi e altro",unit:"cucchiaini"},
+  fondente:{nome:"Cioccolato fondente ≥70%",cat:"Grassi e altro",unit:"g"},
+  marmellata:{nome:"Marmellata ≥70% frutta",cat:"Grassi e altro",unit:"cucchiaini"},
+  miele:{nome:"Miele",cat:"Grassi e altro",unit:"cucchiaini"}
+};
+const unitaSingolare = { uova:'uovo', vasetti:'vasetto', fette:'fetta', gallette:'galletta', frutti:'frutto', cucchiai:'cucchiaio', cucchiaini:'cucchiaino' };
+
+const sostituzioni = {
+  on: [
+    { from:'Colazione · carboidrati', alts:["50g fiocchi/farina d'avena","60g pane integrale","4-5 fette biscottate integrali"] },
+    { from:'Colazione · proteine', alts:["1 kefir/yogurt greco 0%","1 ricottina light","150g albume","150ml latte p. scremato + 1 misurino scarso proteine"] },
+    { from:'Colazione · zuccheri', alts:["1 cucchiaino miele/marmellata ≥70% frutta","1 frutto di stagione"] },
+    { from:'Colazione · grassi', alts:["1 uovo BIO","10g cioccolato fondente ≥70%","1 cucchiaino burro d'arachidi 100%","40g avocado","10g frutta secca","2 cucchiaini olio EVO","5g burro"] },
+    { from:'Spuntino mattina', alts:["15 mandorle","15 nocciole/pistacchi","2 noci sgusciate","10 olive","20g parmigiano"] },
+    { from:'Pranzo · carboidrati', alts:["100g riso/couscous/pasta","120g pasta integrale","110g farro/orzo perlato","400g patate","150g pane integrale","100g polenta"] },
+    { from:'Pranzo · proteine', alts:["140-150g carne bianca magra","200g pesce magro","150g albume + 1 uovo","80g fesa di tacchino/prosciutto cotto sgrassato","Pasto unico: 150g legumi + 50g riso (o 70g pasta)"] },
+    { from:'Pre-workout', alts:["Carbo: 3-4 gallette di riso/farro oppure 1 frutto","Proteine: 20g proteine in polvere oppure 1 yogurt greco/kefir"] },
+    { from:'Cena · carboidrati', alts:["70g riso/couscous/pasta","90g pasta integrale","80g farro/orzo","250g patate","100g pane integrale","70g polenta"] },
+    { from:'Cena · proteine', alts:["150g carne bianca magra","200g pesce magro","150g albume + 1 uovo","80g fesa di tacchino/prosciutto cotto","Legumi: 150-200g + 30g riso (o 50g pasta)"] }
   ],
-  'Latticini': [
-    { nome:'Yogurt greco 0% alla frutta', perGiorno:['Martedì','Giovedì','Sabato'], base:150, unit:'g' },
-    { nome:'Yogurt magro bianco', perGiorno:['Mercoledì','Domenica'], base:200, unit:'g' },
-    { nome:'Ricotta vaccina', perGiorno:['Lunedì','Venerdì'], base:80, unit:'g' },
-    { nome:'Mozzarella/primo sale', perGiorno:['Giovedì'], base:100, unit:'g' },
-    { nome:'Grana (stick)', perGiorno:['Lunedì','Venerdì'], base:20, unit:'g' },
-    { nome:'Latte p. scremato', perGiorno:['Lunedì'], base:200, unit:'ml' },
-  ],
-  'Carboidrati': [
-    { nome:'Pane integrale/segale', perGiorno:['Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato'], base:160, unit:'g' },
-    { nome:'Pasta/riso/orzo/farro', perGiorno:['Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato','Domenica'], base:80, unit:'g' },
-    { nome:'Fette biscottate', perGiorno:['Lunedì'], base:40, unit:'g' },
-    { nome:'Fiocchi d\'avena', perGiorno:['Martedì','Mercoledì','Domenica'], base:30, unit:'g' },
-    { nome:'Gallette di riso', perGiorno:['Giovedì'], base:2, unit:'gallette' },
-    { nome:'Barretta cereali s. zuccheri', perGiorno:['Sabato'], base:1, unit:'barretta' },
-  ],
-  'Frutta e verdura': [
-    { nome:'Frutta di stagione', perGiorno:['Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato','Domenica'], base:150, unit:'g' },
-    { nome:'Arance per spremuta', perGiorno:['Martedì','Giovedì','Sabato'], base:2, unit:'arance' },
-    { nome:'Verdure miste', perGiorno:['Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato','Domenica'], base:300, unit:'g' },
-  ],
-  'Grassi e altro': [
-    { nome:'Olio evo', perGiorno:GIORNI, base:30, unit:'g' },
-    { nome:'Avocado', perGiorno:['Martedì','Giovedì','Sabato'], base:30, unit:'g' },
-    { nome:'Frutta secca (noci/mandorle)', perGiorno:['Mercoledì','Venerdì','Domenica'], base:15, unit:'g' },
-    { nome:'Semi chia o lino', perGiorno:['Mercoledì','Domenica'], base:10, unit:'g' },
-    { nome:'Marmellata senza zuccheri', perGiorno:['Lunedì'], base:20, unit:'g' },
-    { nome:'Crema mandorle/burro arachidi', perGiorno:['Lunedì'], base:10, unit:'g' },
+  off: [
+    { from:'Colazione · carboidrati', alts:["40g fiocchi/farina d'avena","50g pane integrale","3-4 fette biscottate integrali"] },
+    { from:'Colazione · proteine', alts:["1 kefir/yogurt greco 0%","1 ricottina light","100-150g albume","15g proteine in polvere","150ml latte + proteine","50-60g prosciutto magro/fesa di tacchino"] },
+    { from:'Colazione · zuccheri', alts:["1 cucchiaino miele/marmellata ≥70% frutta","1 frutto di stagione"] },
+    { from:'Colazione · grassi', alts:["1 uovo BIO","15g cioccolato fondente ≥70%","10g burro di qualità","1 cucchiaino burro d'arachidi 100%","10g frutta secca"] },
+    { from:'Spuntino mattina', alts:["1 frutto +","15 mandorle","15 pistacchi","3 noci sgusciate","20g parmigiano"] },
+    { from:'Pranzo · carboidrati', alts:["50g riso/couscous","70g pasta integrale","200g patate","80g pane integrale","50g polenta"] },
+    { from:'Pranzo · proteine', alts:["140-150g carne bianca magra","200g pesce magro","150g albume + 1 uovo","1 ricottina light","Pasto unico: 150-200g legumi + 20g pasta o riso"] },
+    { from:'Spuntino pomeriggio', alts:["Proteine: 15g proteine in polvere, 1 kefir/yogurt greco oppure 60g fesa di tacchino","Grassi: 20g parmigiano, 15 mandorle oppure 2 noci"] },
+    { from:'Cena · carboidrati', alts:["50g pane integrale"] },
+    { from:'Cena · proteine', alts:["150g carne bianca magra","200g pesce magro","200g albume + 1 uovo","150g tonno al naturale/sgombro in scatola","150g salmone fresco/filetto di tonno","1 mozzarella fresca"] }
   ]
 };
-const sostituzioni = [
-  { from:'10g olio evo', alts:['→ 30g avocado','→ 25g pesto di basilico'] },
-  { from:'5g olio evo', alts:['→ 10g semi vegetali','→ 10g frutta secca','→ 30g olive verdi (in ammollo)'] },
-  { from:'80g pane integrale', alts:['→ 250g patate (max 2×/settimana)'] },
-  { from:'Frutta secca', alts:['→ noci, mandorle, arachidi, nocciole, pinoli, pistacchi, anacardi'] },
-  { from:'Semi vegetali', alts:['→ lino, chia, sesamo, canapa, papavero, zucca, girasole, nigella'] },
-  { from:'Legumi', alts:['→ fagioli (borlotti, cannellini, neri...), lenticchie, ceci, fave, piselli, edamame'] },
-];
 
 // ── Persistenza localStorage ──────────────────────────────────────────────
 function loadState() {
@@ -249,11 +399,24 @@ const _saved = loadState();
 
 let checkedSpesa  = _saved.checkedSpesa  || {};
 let checkedMeals  = _saved.checkedMeals  || {};
-let allenamento   = _saved.allenamento   || {};
+let allenamento   = _saved.allenamento   || {...ALLENAMENTO_DEFAULT};
 let selectedDays  = new Set(_saved.selectedDays && _saved.selectedDays.length ? _saved.selectedDays : GIORNI);
 const todayIdx    = (() => { const d = new Date().getDay(); return d===0?7:d; })();
 let trackerDay    = _saved.trackerDay    || GIORNI[todayIdx-1] || 'Lunedì';
 let activeTab     = _saved.activeTab     || 'settimana';
+
+// ── Menu ON/OFF ───────────────────────────────────────────────────────────
+function menu(g){ return piani[g][allenamento[g]?'on':'off']; }
+function etichetta(g,k){ return k==='spuntino_p' && allenamento[g] ? 'Pre-workout' : mealLabels[k]; }
+function testoPasto(g,k){
+  const p=menu(g); let t=p[k];
+  if((k==='pranzo'||k==='cena') && t!=='Pasto libero'){
+    const olio=allenamento[g]?(k==='pranzo'?'1 cucchiaio abbondante':'2 cucchiai'):'1 cucchiaio';
+    t+=` + 150-200g verdure + ${olio} di olio EVO`;
+  }
+  const alt=p[k+'_alt'];
+  return t+(alt?`<div class="meal-alt">Oppure: ${alt}</div>`:'');
+}
 
 // ── Tab ───────────────────────────────────────────────────────────────────
 function showTab(id, btn) {
@@ -267,11 +430,12 @@ function showTab(id, btn) {
 
 // ── Settimana ─────────────────────────────────────────────────────────────
 function renderSettimana() {
-  const el = document.getElementById('settimana'); el.innerHTML='';
+  const el = document.getElementById('settimana');
+  el.innerHTML='<p class="settimana-hint">Nei giorni di allenamento vedi il menu ON, negli altri il menu OFF. Puoi cambiare i giorni dal Tracker con "Allenamento oggi".</p>';
   GIORNI.forEach(g => {
-    const p=piani[g], all=allenamento[g];
+    const all=allenamento[g];
     const card=document.createElement('div'); card.className='day-card';
-    const rows=Object.entries(mealLabels).map(([k,label])=>`<div class="meal-row"><div class="meal-label">${label}</div><div class="meal-content">${p[k]}</div></div>`).join('');
+    const rows=Object.keys(mealLabels).map(k=>`<div class="meal-row"><div class="meal-label">${etichetta(g,k)}</div><div class="meal-content">${testoPasto(g,k)}</div></div>`).join('');
     card.innerHTML=`<div class="day-header" onclick="toggleDay('${g}')"><span class="day-name">${g}</span><div class="day-meta">${all?'<span class="day-badge allenamento">Allenamento</span>':''}<span class="day-badge">5 pasti</span></div></div><div class="day-body" id="day-${g}">${rows}</div>`;
     el.appendChild(card);
   });
@@ -286,12 +450,12 @@ function renderTracker() {
   GIORNI.forEach(g=>{const btn=document.createElement('button');btn.className='day-btn'+(g===trackerDay?' active':'');btn.textContent=g.slice(0,3);btn.onclick=()=>{trackerDay=g;saveState();renderTracker();};sel.appendChild(btn);});
   el.appendChild(sel);
   if(!checkedMeals[trackerDay]) checkedMeals[trackerDay]={};
-  const p=piani[trackerDay];
   const grid=document.createElement('div'); grid.className='tracker-grid';
-  Object.entries(mealLabels).forEach(([k,label])=>{
+  Object.keys(mealLabels).forEach(k=>{
+    const label=etichetta(trackerDay,k);
     const done=checkedMeals[trackerDay][k];
     const row=document.createElement('div'); row.className='t-row';
-    row.innerHTML=`<div class="t-label">${label}</div><div class="t-content" style="${done?'text-decoration:line-through;color:#9a9186':''}">${p[k]}</div><div class="t-check-cell"><button class="check-btn ${done?'checked':''}" onclick="toggleMeal('${trackerDay}','${k}')"></button></div>`;
+    row.innerHTML=`<div class="t-label">${label}</div><div class="t-content" style="${done?'text-decoration:line-through;color:#9a9186':''}">${testoPasto(trackerDay,k)}</div><div class="t-check-cell"><button class="check-btn ${done?'checked':''}" onclick="toggleMeal('${trackerDay}','${k}')"></button></div>`;
     grid.appendChild(row);
   });
   el.appendChild(grid);
@@ -302,33 +466,28 @@ function renderTracker() {
   el.appendChild(prog);
   const isOn=!!allenamento[trackerDay];
   const allRow=document.createElement('div'); allRow.className='allenamento-row';
-  allRow.innerHTML=`<div><div class="allenamento-label">Allenamento oggi</div><div class="allenamento-sub">${isOn?'Ricorda: BCAA 6g — 15min prima':'Attiva per il reminder integratori'}</div></div><div class="toggle-pill ${isOn?'on':''}" onclick="toggleAll('${trackerDay}')"><div class="toggle-knob"></div></div>`;
+  allRow.innerHTML=`<div><div class="allenamento-label">Allenamento oggi</div><div class="allenamento-sub">${isOn?'Menu ON · Ricorda: BCAA 6g — 15min prima':'Menu OFF · Attiva se ti alleni'}</div></div><div class="toggle-pill ${isOn?'on':''}" onclick="toggleAll('${trackerDay}')"><div class="toggle-knob"></div></div>`;
   el.appendChild(allRow);
   const integr=document.createElement('div'); integr.className='integr-card';
   integr.innerHTML=`<div class="integr-title">Integratori</div><div class="integr-row"><span>Creatina monoidrato — 3g</span><span class="integr-badge">con i carbo</span></div>${isOn?'<div class="integr-row"><span>BCAA — 6g</span><span class="integr-badge pre">pre-workout</span></div>':''}<div class="integr-row"><span>Magnesio bisglicinato — 300mg</span><span class="integr-badge sera">sera</span></div>`;
   el.appendChild(integr);
 }
 function toggleMeal(day,key){if(!checkedMeals[day])checkedMeals[day]={};checkedMeals[day][key]=!checkedMeals[day][key];saveState();renderTracker();}
-function toggleAll(day){allenamento[day]=!allenamento[day];saveState();renderTracker();renderSettimana();}
+function toggleAll(day){allenamento[day]=!allenamento[day];saveState();renderTracker();renderSettimana();renderSpesa();}
 
 // ── Spesa ─────────────────────────────────────────────────────────────────
 function calcSpesa(){
+  const totali={};
+  GIORNI.filter(g=>selectedDays.has(g)).forEach(g=>{
+    Object.entries(menu(g).ing).forEach(([id,q])=>{ totali[id]=(totali[id]||0)+q; });
+  });
   const result={};
-  Object.entries(spesaBase).forEach(([cat,items])=>{
-    result[cat]=items.map(item=>{
-      const days=item.perGiorno.filter(d=>selectedDays.has(d));
-      if(!days.length) return null;
-      const total=days.length*item.base;
-      let qty;
-      if(item.unit==='g') qty=total+'g';
-      else if(item.unit==='ml') qty=total+'ml';
-      else if(item.unit==='uova') qty=total+' uova';
-      else if(item.unit==='gallette') qty=total+' gallette';
-      else if(item.unit==='barretta') qty=total+(total===1?' barretta':' barrette');
-      else if(item.unit==='arance') qty=total+' arance';
-      else qty=total+' '+item.unit;
-      return {nome:item.nome,qty};
-    }).filter(Boolean);
+  Object.entries(ingredienti).forEach(([id,item])=>{
+    if(!totali[id]) return;
+    const t=totali[id];
+    const u=item.unit;
+    const qty=(u==='g'||u==='ml') ? t+u : t+' '+(t===1?(unitaSingolare[u]||u):u);
+    (result[item.cat]=result[item.cat]||[]).push({nome:item.nome,qty});
   });
   return result;
 }
@@ -360,12 +519,15 @@ function toggleSpesa(key){checkedSpesa[key]=!checkedSpesa[key];saveState();rende
 // ── Sostituzioni ──────────────────────────────────────────────────────────
 function renderSostituzioni(){
   const el=document.getElementById('sostituzioni'); el.innerHTML='';
-  const intro=document.createElement('p'); intro.style.cssText='font-size:13px;color:#6b6358;margin-bottom:1rem;line-height:1.6;'; intro.textContent='Equivalenze per i grassi buoni: mantieni lo stesso apporto usando queste alternative.'; el.appendChild(intro);
-  const grid=document.createElement('div'); grid.className='sost-grid';
-  sostituzioni.forEach(s=>{const card=document.createElement('div');card.className='sost-card';card.innerHTML=`<div class="sost-from">${s.from}</div>${s.alts.map(a=>`<div class="sost-item">${a}</div>`).join('')}`;grid.appendChild(card);});
-  el.appendChild(grid);
+  const intro=document.createElement('p'); intro.style.cssText='font-size:13px;color:#6b6358;margin-bottom:1rem;line-height:1.6;'; intro.textContent='Le opzioni dello stesso gruppo sono equivalenti: per ogni categoria scegline una.'; el.appendChild(intro);
+  [['on','Giorno ON · allenamento · 1900 kcal'],['off','Giorno OFF · riposo · 1700 kcal']].forEach(([tipo,titolo])=>{
+    const h=document.createElement('div'); h.className='sost-title'; h.textContent=titolo; el.appendChild(h);
+    const grid=document.createElement('div'); grid.className='sost-grid';
+    sostituzioni[tipo].forEach(s=>{const card=document.createElement('div');card.className='sost-card';card.innerHTML=`<div class="sost-from">${s.from}</div>${s.alts.map(a=>`<div class="sost-item">${a}</div>`).join('')}`;grid.appendChild(card);});
+    el.appendChild(grid);
+  });
   const note=document.createElement('div'); note.className='note-card';
-  note.innerHTML=`<strong style="font-weight:500;color:#5a3e3b;">Frequenze settimanali</strong><br>Carne bianca 1–3× · Carne rossa 1× · Pesce 2–3× · Formaggi freschi 1–2× · Legumi 2–3× · Uova 2–4 · Pasto libero 1×<br><br><strong style="font-weight:500;color:#5a3e3b;">Condimenti pasta:</strong> verdure, pomodoro fresco, sugo di pomodoro, olio indicato, pesto max 1×/sett.`;
+  note.innerHTML=`<strong style="font-weight:500;">Pranzo e cena</strong><br>Sempre 150-200g di verdure. ON: 1 cucchiaio abbondante di olio EVO a pranzo, 2 cucchiai a cena. OFF: 1 cucchiaio a pasto.<br><br><strong style="font-weight:500;">Limiti settimanali</strong><br>Carne rossa, affettati e mozzarella: max 1-2×. Tonno o sgombro in scatola: max 2-3×. Pasto libero: 1×, senza compensare nei giorni dopo.<br><br><strong style="font-weight:500;">Buone abitudini</strong><br>Pesi a crudo e al netto degli scarti. Acqua: almeno 2-2,5 litri al giorno. Se ti alleni al mattino, il pre-workout diventa post-workout; se ti svegli tardi, sostituisce la colazione.<br><br><strong style="font-weight:500;">Da confermare</strong><br>Legumi: chiedere alla nutrizionista se le grammature sono da crudi o da cotti.`;
   el.appendChild(note);
 }
 
