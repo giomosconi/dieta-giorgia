@@ -132,10 +132,14 @@ button { font-family: inherit; color: inherit; -webkit-tap-highlight-color: tran
 /* Sostituzioni */
 .sost-title { font-family: 'Fraunces', Georgia, serif; font-size: 18px; font-weight: 500; margin: 0 0 10px; }
 .sost-grid { display: grid; grid-template-columns: 1fr; gap: 8px; margin-bottom: 1.5rem; }
-.sost-card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 13px 15px; }
-.sost-from { font-size: 13px; font-weight: 600; color: var(--sage-deep); margin-bottom: 6px; }
-.sost-item { font-size: 14px; padding: 3px 0; line-height: 1.4; }
-@media (min-width: 520px) { .sost-grid { grid-template-columns: 1fr 1fr; } }
+.sost-card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; overflow: hidden; }
+.sost-from { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 14px 15px; font-size: 15px; font-weight: 500; cursor: pointer; list-style: none; -webkit-tap-highlight-color: transparent; }
+.sost-from::-webkit-details-marker { display: none; }
+.sost-from::after { content: ''; flex-shrink: 0; width: 8px; height: 8px; margin-right: 3px; border-right: 2px solid var(--sage); border-bottom: 2px solid var(--sage); transform: translateY(-2px) rotate(45deg); transition: transform 0.15s; }
+.sost-card[open] .sost-from::after { transform: translateY(2px) rotate(-135deg); }
+.sost-card[open] .sost-from { color: var(--sage-deep); }
+.sost-list { padding: 10px 15px 12px; border-top: 1px solid var(--line); }
+.sost-item { font-size: 14px; padding: 4px 0; line-height: 1.4; }
 
 .note-card { background: var(--sage-tint); border-radius: 18px; padding: 15px 16px; margin-top: 10px; font-size: 13.5px; color: var(--ink); line-height: 1.6; }
 .note-card strong { color: var(--sage-deep); font-weight: 600 !important; }
@@ -524,7 +528,7 @@ function renderSostituzioni(){
   [['on','Giorno ON · allenamento · 1900 kcal'],['off','Giorno OFF · riposo · 1700 kcal']].forEach(([tipo,titolo])=>{
     const h=document.createElement('div'); h.className='sost-title'; h.textContent=titolo; el.appendChild(h);
     const grid=document.createElement('div'); grid.className='sost-grid';
-    sostituzioni[tipo].forEach(s=>{const card=document.createElement('div');card.className='sost-card';card.innerHTML=`<div class="sost-from">${s.from}</div>${s.alts.map(a=>`<div class="sost-item">${a}</div>`).join('')}`;grid.appendChild(card);});
+    sostituzioni[tipo].forEach(s=>{const card=document.createElement('details');card.className='sost-card';card.innerHTML=`<summary class="sost-from">${s.from}</summary><div class="sost-list">${s.alts.map(a=>`<div class="sost-item">${a}</div>`).join('')}</div>`;grid.appendChild(card);});
     el.appendChild(grid);
   });
   const note=document.createElement('div'); note.className='note-card';
