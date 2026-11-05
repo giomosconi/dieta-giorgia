@@ -138,8 +138,10 @@ button { font-family: inherit; color: inherit; -webkit-tap-highlight-color: tran
 .sost-from::after { content: ''; flex-shrink: 0; width: 8px; height: 8px; margin-right: 3px; border-right: 2px solid var(--sage); border-bottom: 2px solid var(--sage); transform: translateY(-2px) rotate(45deg); transition: transform 0.15s; }
 .sost-card[open] .sost-from::after { transform: translateY(2px) rotate(-135deg); }
 .sost-card[open] .sost-from { color: var(--sage-deep); }
-.sost-list { padding: 10px 15px 12px; border-top: 1px solid var(--line); }
-.sost-item { font-size: 14px; padding: 4px 0; line-height: 1.4; }
+.sost-list { padding: 12px 15px 12px; border-top: 1px solid var(--line); }
+.sost-nota { font-size: 13px; line-height: 1.4; color: var(--sage-deep); background: var(--sage-tint); border-radius: 10px; padding: 8px 10px; margin-bottom: 4px; }
+.sost-item { font-size: 14.5px; padding: 9px 0; line-height: 1.45; border-bottom: 1px solid var(--line); }
+.sost-item:last-child { border-bottom: none; padding-bottom: 2px; }
 
 .note-card { background: var(--sage-tint); border-radius: 18px; padding: 15px 16px; margin-top: 10px; font-size: 13.5px; color: var(--ink); line-height: 1.6; }
 .note-card strong { color: var(--sage-deep); font-weight: 600 !important; }
@@ -355,28 +357,73 @@ const unitaSingolare = { uova:'uovo', vasetti:'vasetto', fette:'fetta', gallette
 
 const sostituzioni = {
   on: [
-    { from:'Colazione · carboidrati', alts:["50g fiocchi/farina d'avena","60g pane integrale","4-5 fette biscottate integrali"] },
-    { from:'Colazione · proteine', alts:["1 kefir/yogurt greco 0%","1 ricottina light","150g albume","150ml latte p. scremato + 1 misurino scarso proteine"] },
-    { from:'Colazione · zuccheri', alts:["1 cucchiaino miele/marmellata ≥70% frutta","1 frutto di stagione"] },
-    { from:'Colazione · grassi', alts:["1 uovo BIO","10g cioccolato fondente ≥70%","1 cucchiaino burro d'arachidi 100%","40g avocado","10g frutta secca","2 cucchiaini olio EVO","5g burro"] },
-    { from:'Spuntino mattina', alts:["15 mandorle","15 nocciole/pistacchi","2 noci sgusciate","10 olive","20g parmigiano"] },
-    { from:'Pranzo · carboidrati', alts:["100g riso/couscous/pasta","120g pasta integrale","110g farro/orzo perlato","400g patate","150g pane integrale","100g polenta"] },
-    { from:'Pranzo · proteine', alts:["140-150g carne bianca magra","200g pesce magro","150g albume + 1 uovo","80g fesa di tacchino/prosciutto cotto sgrassato","Pasto unico: 150g legumi + 50g riso (o 70g pasta)"] },
-    { from:'Pre-workout', alts:["Carbo: 3-4 gallette di riso/farro oppure 1 frutto","Proteine: 20g proteine in polvere oppure 1 yogurt greco/kefir"] },
-    { from:'Cena · carboidrati', alts:["70g riso/couscous/pasta","90g pasta integrale","80g farro/orzo","250g patate","100g pane integrale","70g polenta"] },
-    { from:'Cena · proteine', alts:["150g carne bianca magra","200g pesce magro","150g albume + 1 uovo","80g fesa di tacchino/prosciutto cotto","Legumi: 150-200g + 30g riso (o 50g pasta)"] }
+    { from:'Colazione', alts:[
+      "Porridge con 50g fiocchi d'avena + 1 yogurt greco 0% + 1 frutto + 10g frutta secca",
+      "Overnight oats con 50g fiocchi d'avena + 150ml latte p. scremato + 1 misurino scarso di proteine + 1 frutto + 1 cucchiaino burro d'arachidi",
+      "Toast con 60g pane integrale + 150g albume strapazzato + 40g avocado + 1 frutto",
+      "Pane, burro e marmellata: 60g pane integrale + 5g burro + 1 cucchiaino marmellata + 1 kefir",
+      "4-5 fette biscottate integrali + 1 ricottina light + 1 cucchiaino miele + 10g cioccolato fondente",
+      "Pancake con 50g farina d'avena + 150g albume + 1 frutto + 1 cucchiaino burro d'arachidi"
+    ]},
+    { from:'Spuntino mattina', alts:["15 mandorle","15 nocciole","15 pistacchi","2 noci sgusciate","10 olive","20g parmigiano"] },
+    { from:'Pranzo', nota:"Sempre con 150-200g di verdure + 1 cucchiaio abbondante di olio EVO", alts:[
+      "Pasta e pollo: 100g pasta + 150g straccetti di pollo",
+      "Pasta integrale al pesce: 120g pasta integrale + 200g nasello con pomodorini",
+      "Riso e tacchino: 100g riso + 150g tacchino al curry",
+      "Insalata di farro: 110g farro + 150g albume + 1 uovo in frittata a cubetti",
+      "Pesce al forno con patate: 400g patate + 200g orata",
+      "Polenta e pollo in umido: 100g polenta + 150g pollo",
+      "Couscous e pesce: 100g couscous + 200g merluzzo",
+      "Panino: 150g pane integrale + 80g fesa di tacchino o prosciutto cotto sgrassato",
+      "Pasto unico: 150g lenticchie + 50g riso",
+      "Pasto unico: pasta e ceci con 150g ceci + 70g pasta"
+    ]},
+    { from:'Pre-workout', alts:["3-4 gallette + 1 yogurt greco","3-4 gallette + 20g proteine in polvere","1 frutto + 1 kefir","1 frutto + 20g proteine in polvere"] },
+    { from:'Cena', nota:"Sempre con 150-200g di verdure + 2 cucchiai di olio EVO", alts:[
+      "Riso e pesce: 70g riso + 200g merluzzo",
+      "Pasta integrale e pollo: 90g pasta integrale + 150g pollo",
+      "Orzo e frittata: 80g orzo + 150g albume + 1 uovo",
+      "Patate e tacchino: 250g patate + 150g tacchino",
+      "Pane e pesce: 100g pane integrale + 200g branzino",
+      "Polenta e prosciutto: 70g polenta + 80g prosciutto cotto",
+      "Couscous e pollo: 70g couscous + 150g pollo",
+      "Pasta e fagioli: 150-200g fagioli + 50g pasta",
+      "Riso e lenticchie: 150-200g lenticchie + 30g riso"
+    ]}
   ],
   off: [
-    { from:'Colazione · carboidrati', alts:["40g fiocchi/farina d'avena","50g pane integrale","3-4 fette biscottate integrali"] },
-    { from:'Colazione · proteine', alts:["1 kefir/yogurt greco 0%","1 ricottina light","100-150g albume","15g proteine in polvere","150ml latte + proteine","50-60g prosciutto magro/fesa di tacchino"] },
-    { from:'Colazione · zuccheri', alts:["1 cucchiaino miele/marmellata ≥70% frutta","1 frutto di stagione"] },
-    { from:'Colazione · grassi', alts:["1 uovo BIO","15g cioccolato fondente ≥70%","10g burro di qualità","1 cucchiaino burro d'arachidi 100%","10g frutta secca"] },
-    { from:'Spuntino mattina', alts:["1 frutto +","15 mandorle","15 pistacchi","3 noci sgusciate","20g parmigiano"] },
-    { from:'Pranzo · carboidrati', alts:["50g riso/couscous","70g pasta integrale","200g patate","80g pane integrale","50g polenta"] },
-    { from:'Pranzo · proteine', alts:["140-150g carne bianca magra","200g pesce magro","150g albume + 1 uovo","1 ricottina light","Pasto unico: 150-200g legumi + 20g pasta o riso"] },
-    { from:'Spuntino pomeriggio', alts:["Proteine: 15g proteine in polvere, 1 kefir/yogurt greco oppure 60g fesa di tacchino","Grassi: 20g parmigiano, 15 mandorle oppure 2 noci"] },
-    { from:'Cena · carboidrati', alts:["50g pane integrale"] },
-    { from:'Cena · proteine', alts:["150g carne bianca magra","200g pesce magro","200g albume + 1 uovo","150g tonno al naturale/sgombro in scatola","150g salmone fresco/filetto di tonno","1 mozzarella fresca"] }
+    { from:'Colazione', alts:[
+      "Porridge con 40g fiocchi d'avena + 1 yogurt greco 0% + 1 frutto + 10g frutta secca",
+      "Overnight oats con 40g fiocchi d'avena + 150ml latte + proteine + 1 frutto + 1 cucchiaino burro d'arachidi",
+      "Toast salato: 50g pane integrale + 50-60g fesa di tacchino + 1 uovo + 1 frutto",
+      "Pane, burro e marmellata: 50g pane integrale + 10g burro + 1 cucchiaino marmellata + 1 kefir",
+      "3-4 fette biscottate integrali + 1 ricottina light + 1 cucchiaino miele + 15g cioccolato fondente",
+      "Pancake con 40g farina d'avena + 100-150g albume + 1 frutto + 1 cucchiaino burro d'arachidi"
+    ]},
+    { from:'Spuntino mattina', alts:["1 frutto + 15 mandorle","1 frutto + 15 pistacchi","1 frutto + 3 noci sgusciate","1 frutto + 20g parmigiano"] },
+    { from:'Pranzo', nota:"Sempre con 150-200g di verdure + 1 cucchiaio di olio EVO", alts:[
+      "Riso e pollo: 50g riso + 150g pollo",
+      "Pasta integrale al pesce: 70g pasta integrale + 200g merluzzo con pomodorini",
+      "Patate e tacchino: 200g patate + 150g tacchino",
+      "Pane e frittata: 80g pane integrale + 150g albume + 1 uovo",
+      "Polenta e pesce: 50g polenta + 200g orata",
+      "Couscous e ricotta: 50g couscous + 1 ricottina light",
+      "Pasto unico: pasta e ceci con 150-200g ceci + 20g pasta",
+      "Pasto unico: 150-200g lenticchie + 20g riso"
+    ]},
+    { from:'Spuntino pomeriggio', alts:["1 yogurt greco + 15 mandorle","1 kefir + 2 noci","15g proteine in polvere + 20g parmigiano","60g fesa di tacchino + 15 mandorle"] },
+    { from:'Cena', nota:"Sempre con 50g di pane integrale, 150-200g di verdure + 1 cucchiaio di olio EVO", alts:[
+      "150g pollo alla griglia",
+      "150g tacchino al limone",
+      "200g merluzzo al forno",
+      "200g branzino al cartoccio",
+      "Frittata con 200g albume + 1 uovo",
+      "150g salmone fresco",
+      "150g filetto di tonno fresco",
+      "150g tonno al naturale (scatola: max 2-3× a settimana)",
+      "150g sgombro in scatola (scatola: max 2-3× a settimana)",
+      "1 mozzarella fresca (max 1-2× a settimana)"
+    ]}
   ]
 };
 
@@ -524,11 +571,11 @@ function toggleSpesa(key){checkedSpesa[key]=!checkedSpesa[key];saveState();rende
 // ── Sostituzioni ──────────────────────────────────────────────────────────
 function renderSostituzioni(){
   const el=document.getElementById('sostituzioni'); el.innerHTML='';
-  const intro=document.createElement('p'); intro.style.cssText='font-size:13px;color:#6b6358;margin-bottom:1rem;line-height:1.6;'; intro.textContent='Le opzioni dello stesso gruppo sono equivalenti: per ogni categoria scegline una.'; el.appendChild(intro);
+  const intro=document.createElement('p'); intro.style.cssText='font-size:13px;color:#6b6358;margin-bottom:1rem;line-height:1.6;'; intro.textContent='Se un pasto del giorno non ti va, scambialo con uno di questi: sono già pronti e con le grammature giuste. Scegli il pasto che stai sostituendo, nel gruppo ON o OFF.'; el.appendChild(intro);
   [['on','Giorno ON · allenamento · 1900 kcal'],['off','Giorno OFF · riposo · 1700 kcal']].forEach(([tipo,titolo])=>{
     const h=document.createElement('div'); h.className='sost-title'; h.textContent=titolo; el.appendChild(h);
     const grid=document.createElement('div'); grid.className='sost-grid';
-    sostituzioni[tipo].forEach(s=>{const card=document.createElement('details');card.className='sost-card';card.innerHTML=`<summary class="sost-from">${s.from}</summary><div class="sost-list">${s.alts.map(a=>`<div class="sost-item">${a}</div>`).join('')}</div>`;grid.appendChild(card);});
+    sostituzioni[tipo].forEach(s=>{const card=document.createElement('details');card.className='sost-card';card.innerHTML=`<summary class="sost-from">${s.from}</summary><div class="sost-list">${s.nota?`<div class="sost-nota">${s.nota}</div>`:''}${s.alts.map(a=>`<div class="sost-item">${a}</div>`).join('')}</div>`;grid.appendChild(card);});
     el.appendChild(grid);
   });
   const note=document.createElement('div'); note.className='note-card';
